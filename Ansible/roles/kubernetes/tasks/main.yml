@@ -1,0 +1,49 @@
+---
+- name: Install dependencies
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  loop:
+    - apt-transport-https
+    - curl
+
+- name: Add Kubernetes APT key
+  ansible.builtin.apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Add Kubernetes repository
+  ansible.builtin.apt_repository:
+    repo: deb http://apt.kubernetes.io/ kubernetes-jammy main
+    state: present
+
+- name: Install Kubernetes packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  
+
+- name: Disable swap
+  ansible.builtin.shell:
+    cmd: swapoff -a
+    creates: /proc/swaps
+  when: ansible_facts.swaptotal > 0
+
+- name: Comment out swap in fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^(\S+\s+\S+\s+swap\s+\S+\s+\S+\s+\S+)$'
+    replace: '#\1'
+  when: ansible_facts.swaptotal > 0
+
+- name: Enable kubelet service
+  ansible.builtin.systemd:
+    name: kubelet
+    enabled: true
+    state: started

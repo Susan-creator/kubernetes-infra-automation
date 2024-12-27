@@ -1,0 +1,31 @@
+---
+- name: Configure the Kubernetes Master Node
+  hosts: master
+  become: true
+  roles:
+    - kubernetes
+  tasks:
+    - name: Initialize Kubernetes master
+      ansible.builtin.shell: |
+        kubeadm init --pod-network-cidr=10.244.0.0/16
+        mkdir -p $HOME/.kube
+        sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+        sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      args:
+        creates: /etc/kubernetes/admin.conf
+      register: master_output
+
+    - name: Save Kubernetes join command for worker nodes
+      ansible.builtin.set_fact:
+        join_command: "{{ master_output.stdout_lines | select('search', 'kubeadm join') | list | first }}"
+
+- name: Configure the Kubernetes Worker Nodes
+  hosts: workers
+  become: true
+  roles:
+    - kubernetes
+  tasks:
+    - name: Join Kubernetes cluster
+      ansible.builtin.command: "{{ hostvars['master']['join_command'] }}"
+      args:
+        creates: /etc/kubernetes/kubelet.conf

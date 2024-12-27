@@ -1,0 +1,24 @@
+galaxy_info:
+  author: susan owoicho
+  description: Kubernetes configuration on Ubuntu
+  company: Your Company (optional)
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.1"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+
+  galaxy_tags:
+    - kubernetes
+    - container
+    - ubuntu
+    - cloud
+    - devops
+
+dependencies:
+  - src: geerlingguy.kubernetes
+    version: "latest"
+  - src: geerlingguy.containerd  # Optional, if using containerd instead of Docker
+    version: "latest"  # Only if you're using containerd
